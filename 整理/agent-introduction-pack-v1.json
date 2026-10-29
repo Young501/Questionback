@@ -1,0 +1,839 @@
+{
+  "id": "agent-introduction-pack-v1",
+  "knowledge": [
+    {
+      "id": "agent-introduction-v1",
+      "title": "什么是 Agent？与大模型有什么本质不同？",
+      "category": "AI Agent",
+      "summary": "记住“自主闭环”：围绕目标做决策，调用工具执行，观察结果，再调整下一步。模型是决策组件，Agent 是包含执行、状态与反馈的系统。",
+      "tags": [
+        "自主闭环",
+        "工具调用",
+        "记忆机制",
+        "MCP",
+        "A2A"
+      ],
+      "sections": [
+        {
+          "heading": "先记住一句话",
+          "body": "Agent 是围绕目标运行的 AI 系统。它感知当前状态、规划下一步、通过工具采取行动，并根据执行结果继续决策，形成自主闭环。LLM 是其中负责理解、推理和生成的决策组件，不能把模型与完整系统混为一谈。",
+          "bullets": [
+            "记忆口诀：目标驱动，感知规划，工具行动，反馈调整。",
+            "区分层级：LLM 是模型；Agent 是组织模型、工具、状态和控制循环的系统。"
+          ],
+          "steps": [],
+          "source": "PDF 第 1、4、5、13 页"
+        },
+        {
+          "heading": "LLM 与 Agent：差别在系统层",
+          "body": "不要把“普通大模型完全不会规划”当成结论。模型本身可以输出计划，也能使用传入的对话上下文；区别在于，完整执行循环与跨调用状态需要系统来组织。这里比较的是独立模型调用与 Agent 系统，而不是所有聊天产品。",
+          "bullets": [],
+          "steps": [],
+          "table": {
+            "headers": [
+              "比较维度",
+              "独立的模型调用",
+              "Agent 系统"
+            ],
+            "rows": [
+              [
+                "交互方式",
+                "输入上下文，生成输出",
+                "围绕目标持续决定下一步"
+              ],
+              [
+                "对外行动",
+                "生成调用请求或操作说明",
+                "由外部程序执行工具，获得真实结果"
+              ],
+              [
+                "任务状态",
+                "只依据本次传入的上下文",
+                "维护执行轨迹、中间结果和相关记忆"
+              ],
+              [
+                "结果反馈",
+                "一次调用结束后不会自行继续",
+                "观察成功或失败，决定继续、调整或结束"
+              ]
+            ]
+          },
+          "source": "PDF 第 2、3、9、13 页；边界澄清"
+        },
+        {
+          "heading": "未接外部能力时的三个限制",
+          "body": "对应的系统补足：信息来源与工具、执行程序、任务状态与记忆。工具不等于长期记忆；记忆也不会凭空产生。",
+          "bullets": [
+            "实时信息：模型参数不会因为外界发生新事件就自动更新；获取天气等实时数据需要外部信息来源。",
+            "真实行动：写出邮件正文不等于邮件已发送；需要运行程序调用发送接口。",
+            "持续状态：一次调用能利用传入的上下文，但没有显式保存和回传，就不能保证跨调用保留中间状态。"
+          ],
+          "steps": [],
+          "source": "PDF 第 2、3、6、9 页"
+        },
+        {
+          "heading": "运行闭环：感知 → 规划 → 行动 → 再感知",
+          "body": "例子：收到“查询北京天气并形成播报”的目标，先查询天气，检查返回数据，再组织播报。若查询失败，就根据原因调整，而不是把想象中的天气当作已查询的结果。闭环的关键是结果影响后续决策，而不是只执行预先写好的步骤。",
+          "bullets": [],
+          "steps": [
+            "感知：读取目标、当前任务状态、可用信息和上一步执行结果。",
+            "规划：拆解任务，判断下一步是否需要工具、用哪个工具以及参数。",
+            "行动：外部执行程序调用工具或服务，把决策落到真实环境中。",
+            "再感知：读取返回结果，检查是否符合预期，调整计划或结束。"
+          ],
+          "source": "PDF 第 4 至 7、9 页"
+        },
+        {
+          "heading": "工具调用：决策与执行分离",
+          "body": "写出了 get_weather 的 JSON 参数，只表示形成了调用请求。只有执行程序完成调用并拿到结果，才能说“天气已查询”。同理，生成邮件内容或 send_email 请求都不等于邮件已发送。",
+          "bullets": [
+            "工具定义是一份接口说明：名称、用途、参数结构和必填项。定义本身不是执行代码。",
+            "模型根据目标与上下文决定工具名称和参数，生成结构化调用请求。",
+            "运行时或应用代码负责实际调用函数、API、数据库或代码执行器。",
+            "执行结果回传后，模型才能基于真实结果继续判断。"
+          ],
+          "steps": [],
+          "source": "PDF 第 6 至 8 页"
+        },
+        {
+          "heading": "记忆：当前任务与跨任务分开看",
+          "body": "记忆由系统保存、筛选并在需要时提供给模型，不是模型凭空记住所有历史。向量数据库与语义检索是原文给出的常见方式，不是长期记忆唯一可用的实现，也不是每个 Agent 必须配置的组件。",
+          "bullets": [],
+          "steps": [],
+          "table": {
+            "headers": [
+              "记忆类型",
+              "主要保存什么",
+              "资料中的实现举例"
+            ],
+            "rows": [
+              [
+                "短期记忆",
+                "当前任务的搜索结果、计算结果、执行进度",
+                "当前上下文或任务状态"
+              ],
+              [
+                "长期记忆",
+                "跨任务的用户偏好、历史操作记录",
+                "持久化存储，结合检索取回"
+              ]
+            ]
+          },
+          "source": "PDF 第 9 页；实现边界澄清"
+        },
+        {
+          "heading": "多步推理与纠错：失败也要进入反馈",
+          "body": "与固定流程对比时，重点是能根据观察动态决定后续行动。不要承诺 Agent 一定能修复所有错误或永远成功；“可以分析并调整”是系统能力，“每次都正确”是另一个问题。工程上还应设置终止条件或执行预算，防止无限重试（整理补充）。",
+          "bullets": [
+            "搜索无有效结果：观察结果后换关键词，而不是原样重复假设。",
+            "接口报参数错误：读错误信息，判断是否需要修正参数再调用。",
+            "步骤结束：检查结果与目标是否一致，必要时修改后续计划。"
+          ],
+          "steps": [],
+          "source": "PDF 第 9 页；终止边界为整理补充"
+        },
+        {
+          "heading": "为什么更容易落地：三个条件",
+          "body": "这一节是原文对发展背景的归纳，不是 Agent 定义的组成条件。面试优先说明机制，再讨论生态。厂商、版本、组织归属与数量等时间信息不作为固定背诵重点。",
+          "bullets": [
+            "模型能力：理解复杂指令、任务拆解和多步决策的能力提升。",
+            "调用机制：结构化的工具请求减少手工解析模型输出的工程成本。",
+            "配套生态：开发框架、存储与检索、外部 API 等更完善。"
+          ],
+          "steps": [],
+          "source": "PDF 第 10 页"
+        },
+        {
+          "heading": "MCP 与 A2A：一个接工具，一个协作",
+          "body": "核对说明：原文将 Agent Card 简化为包含“正在做什么”的名片。这里将能力发现与动态任务状态分开表述，避免把 Agent Card 当成任务进度表。MCP 的能力范围也不只有工具。",
+          "bullets": [
+            "MCP Host：用户使用的 AI 应用，协调和管理 Client。Client：与 Server 通信的组件。Server：提供工具或上下文能力的程序。",
+            "MCP 使用 JSON-RPC 定义交互，有助于减少逐对定制适配；标准化不等于无需实现工具、配置连接或处理权限。",
+            "A2A 的 Agent Card 是描述身份、能力、技能、服务入口等信息的元数据；任务的动态执行状态通过任务与状态更新描述。",
+            "两者关注不同连接层，可以互补；接上协议并不自动具备自主闭环。"
+          ],
+          "steps": [],
+          "table": {
+            "headers": [
+              "协议",
+              "主要定位",
+              "需要记住的概念"
+            ],
+            "rows": [
+              [
+                "MCP",
+                "AI 应用与外部工具、数据和上下文能力的连接",
+                "Host、Client、Server"
+              ],
+              [
+                "A2A",
+                "不同 Agent 之间的能力发现与任务协作",
+                "Agent Card、消息与任务状态"
+              ]
+            ]
+          },
+          "source": "PDF 第 11 至 13 页；MCP 与 A2A 官方文档核对"
+        },
+        {
+          "heading": "面试易错点",
+          "body": "",
+          "bullets": [],
+          "steps": [],
+          "table": {
+            "headers": [
+              "容易说错",
+              "建议说法"
+            ],
+            "rows": [
+              [
+                "Agent 就是插件或工具调用",
+                "工具只是行动能力的一部分，重点是目标驱动的自主闭环。"
+              ],
+              [
+                "模型自己执行 API",
+                "模型决定调用什么，外部程序执行，结果再反馈。"
+              ],
+              [
+                "模型完全不能规划或记住上下文",
+                "模型可以规划并利用本次上下文；系统负责持续执行和跨调用状态。"
+              ],
+              [
+                "所有 Agent 必须使用向量数据库",
+                "记忆实现取决于任务需求，向量数据库只是一种常见选择。"
+              ],
+              [
+                "Agent 出错就一定能修好",
+                "系统能根据反馈调整，但成功与可靠性需要单独评估。"
+              ],
+              [
+                "MCP 与 A2A 是二选一的替代关系",
+                "MCP 偏向外部能力接入，A2A 偏向 Agent 协作。"
+              ]
+            ]
+          },
+          "source": "PDF 第 6 至 13 页；边界澄清"
+        },
+        {
+          "heading": "面试回答：按这五句组织",
+          "body": "① Agent 是围绕目标进行感知、规划、行动和反馈调整的 AI 系统，核心是自主闭环。\n② LLM 负责理解、推理与生成，Agent 在系统层组织工具、状态和执行循环。\n③ 模型决定用哪个工具、传什么参数，真正的调用由外部程序执行。\n④ 工具结果与中间状态回到上下文，帮助它继续决策；失败时可以调整计划。\n⑤ 所以不能只说“Agent 是能调工具的大模型”，还必须点出目标驱动、多步执行和结果反馈。",
+          "bullets": [
+            "追问工具：强调接口描述、调用请求、真实执行、结果回传四个环节。",
+            "追问记忆：先区分任务内状态与跨任务信息，再说具体实现。",
+            "追问协议：先说明 MCP 与 A2A 的定位，再介绍角色和能力发现。"
+          ],
+          "steps": [],
+          "source": "PDF 第 13 页及前文机制整理"
+        }
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 共 13 页",
+      "references": [
+        {
+          "label": "原文网页（PDF 来源）",
+          "url": "https://xiaolinnote.com/ai/agent/1_whatisagent.html"
+        },
+        {
+          "label": "MCP 官方架构说明（核对）",
+          "url": "https://modelcontextprotocol.io/docs/learn/architecture"
+        },
+        {
+          "label": "A2A 官方规范（核对）",
+          "url": "https://a2a-protocol.org/latest/specification/"
+        }
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "id": "agent-intro-v1-01",
+      "type": "single",
+      "category": "AI Agent",
+      "topic": "Agent 定义",
+      "prompt": "解释 Agent 时，哪一项最能抓住本文强调的核心？",
+      "options": [
+        "参数规模更大",
+        "能生成更长的文字",
+        "围绕目标形成感知、规划、行动与反馈的闭环",
+        "安装了搜索插件"
+      ],
+      "answer": [
+        2
+      ],
+      "explanation": "原文反复强调自主闭环：收到目标后决定下一步、真实执行、观察结果并调整。工具和参数规模都不能单独定义 Agent。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 1、4、13 页"
+    },
+    {
+      "id": "agent-intro-v1-02",
+      "type": "single",
+      "category": "AI Agent",
+      "topic": "LLM 与系统",
+      "prompt": "“LLM 是大脑，工具是手脚”主要说明什么？",
+      "options": [
+        "模型负责决策，外部程序负责执行动作",
+        "工具不需要执行代码",
+        "模型可以直接替代所有外部服务",
+        "工具结果不需要反馈给模型"
+      ],
+      "answer": [
+        0
+      ],
+      "explanation": "工具调用中，模型生成工具名称与参数，外部程序执行，结果回传。不能把生成调用请求当成实际执行。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 6 至 8 页"
+    },
+    {
+      "id": "agent-intro-v1-03",
+      "type": "single",
+      "category": "AI Agent",
+      "topic": "自主闭环",
+      "prompt": "下列哪个场景最能体现自主闭环？",
+      "options": [
+        "模型一次输出十步计划后结束",
+        "程序固定执行 A、B、C 三步，不使用执行结果决定下一步",
+        "工具列表里有搜索和数据库两个函数",
+        "搜索无有效结果后，系统据此调整关键词再查询"
+      ],
+      "answer": [
+        3
+      ],
+      "explanation": "闭环强调执行结果反过来影响决策。步骤多、工具多或能写计划，都不等于已经形成反馈闭环。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 4、5、9 页"
+    },
+    {
+      "id": "agent-intro-v1-04",
+      "type": "single",
+      "category": "AI Agent",
+      "topic": "实时信息",
+      "prompt": "未接外部信息来源的模型，为什么不能仅凭参数保证今天的天气准确？",
+      "options": [
+        "天气不能用语言描述",
+        "参数不会随外界事件自动实时更新",
+        "模型不能理解地点",
+        "所有 API 都不能查询天气"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "原文的知识冻结指参数中的训练知识不会自动变成实时数据。查询今日天气需要外部信息来源，不能把推测当查询结果。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 2、6 页"
+    },
+    {
+      "id": "agent-intro-v1-05",
+      "type": "single",
+      "category": "AI Agent",
+      "topic": "工具定义",
+      "prompt": "工具定义中的名称、描述、参数结构，首先起什么作用？",
+      "options": [
+        "实际发送请求到外部服务器",
+        "替代函数实现",
+        "说明工具用途与调用要求",
+        "自动保存用户的所有历史"
+      ],
+      "answer": [
+        2
+      ],
+      "explanation": "定义是接口说明，帮助模型选择工具与填写参数；真实调用逻辑仍由运行时或应用实现。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 6、7 页"
+    },
+    {
+      "id": "agent-intro-v1-06",
+      "type": "single",
+      "category": "AI Agent",
+      "topic": "任务状态",
+      "prompt": "搜索第一步已有结果，第二步需要使用它。哪种做法更符合短期记忆的用途？",
+      "options": [
+        "保存结果到当前任务状态，并提供给后续决策",
+        "每次忽略结果重新猜测",
+        "一定要重新训练模型",
+        "只记录模型参数量"
+      ],
+      "answer": [
+        0
+      ],
+      "explanation": "短期记忆保留当前任务的中间状态，例如搜索结果和计算结果，使后续步骤保持连贯。不需要为此重新训练模型。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 9 页"
+    },
+    {
+      "id": "agent-intro-v1-07",
+      "type": "single",
+      "category": "AI Agent",
+      "topic": "失败反馈",
+      "prompt": "API 返回“缺少 city 参数”，最符合本文纠错思路的下一步是什么？",
+      "options": [
+        "直接声称已成功查询",
+        "永远以相同参数重试",
+        "忽略错误进入下一步",
+        "阅读错误并补充必要参数，再判断是否重试"
+      ],
+      "answer": [
+        3
+      ],
+      "explanation": "错误信息也是观察结果，应据此诊断并修正。Agent 的纠错不是盲目重试，更不能把失败包装成成功。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 9 页"
+    },
+    {
+      "id": "agent-intro-v1-08",
+      "type": "single",
+      "category": "AI Agent",
+      "topic": "MCP 角色",
+      "prompt": "在 MCP 架构中，负责与 Server 通信、为 Host 获取上下文的是哪个角色？",
+      "options": [
+        "Host",
+        "Client",
+        "Agent Card",
+        "邮件正文"
+      ],
+      "answer": [
+        1
+      ],
+      "explanation": "Host 是应用，Client 是与 Server 通信的组件，Server 提供外部能力。不要把 Agent Card 这个 A2A 概念混进 MCP 角色。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 11 页；MCP 官方架构说明"
+    },
+    {
+      "id": "agent-intro-v1-09",
+      "type": "single",
+      "category": "AI Agent",
+      "topic": "协议定位",
+      "prompt": "不同厂商的 Agent 需要发现对方能力并协作完成任务，主要对应哪项？",
+      "options": [
+        "A2A",
+        "模型参数量",
+        "单个工具的必填参数",
+        "短期上下文窗口"
+      ],
+      "answer": [
+        0
+      ],
+      "explanation": "A2A 的主要定位是 Agent 之间的协作；MCP 主要关注 AI 应用接入工具和上下文能力。两者可以互补。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 12、13 页"
+    },
+    {
+      "id": "agent-intro-v1-10",
+      "type": "single",
+      "category": "AI Agent",
+      "topic": "面试表达",
+      "prompt": "面试官说“你讲的只是工具调用”，最应补充哪一点？",
+      "options": [
+        "工具数量越多越好",
+        "所有工具都必须联网",
+        "目标驱动的自主规划与结果反馈闭环",
+        "生成 JSON 就代表任务完成"
+      ],
+      "answer": [
+        2
+      ],
+      "explanation": "应补充自主性与闭环：围绕目标决定步骤、执行动作，再根据真实结果决定下一步，而不是停留在“能调工具”。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 1、13 页"
+    },
+    {
+      "id": "agent-intro-v1-11",
+      "type": "multiple",
+      "category": "AI Agent",
+      "topic": "普通模型的边界",
+      "prompt": "对于未接执行器与外部状态的独立模型调用，哪些描述较准确？（多选）",
+      "options": [
+        "能根据输入生成文字或计划",
+        "能利用本次传入的上下文",
+        "生成发送请求就意味着邮件已发出",
+        "不会仅凭输出文字自动完成外部操作"
+      ],
+      "answer": [
+        0,
+        1,
+        3
+      ],
+      "explanation": "模型能生成计划、利用上下文；真实行动需要外部程序。原文的对比应理解为系统能力的差别，而不是模型完全不能规划。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 2、3、6 页；边界澄清"
+    },
+    {
+      "id": "agent-intro-v1-12",
+      "type": "multiple",
+      "category": "AI Agent",
+      "topic": "三项支撑能力",
+      "prompt": "原文主要用哪三项能力解释 Agent 如何支持自主闭环？（多选）",
+      "options": [
+        "工具调用",
+        "短期和长期记忆",
+        "多步推理与自我纠错",
+        "固定不变的执行路线"
+      ],
+      "answer": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "工具让系统行动，记忆维持连贯，多步推理与纠错让后续决策利用反馈。固定路线不是原文强调的第三项。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 6、9 页"
+    },
+    {
+      "id": "agent-intro-v1-13",
+      "type": "multiple",
+      "category": "AI Agent",
+      "topic": "执行过程",
+      "prompt": "一次真实工具调用链路通常包含哪些环节？（多选）",
+      "options": [
+        "向模型提供工具用途与参数要求",
+        "模型形成调用请求",
+        "外部程序执行调用",
+        "将执行结果用于后续判断",
+        "把调用请求直接当作成功结果"
+      ],
+      "answer": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "explanation": "定义、请求、执行、反馈是不同环节。必须区分意图与已经发生的操作，不能跳过执行和结果检查。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 6 至 8 页"
+    },
+    {
+      "id": "agent-intro-v1-14",
+      "type": "multiple",
+      "category": "AI Agent",
+      "topic": "记忆分类",
+      "prompt": "下列哪些更适合作为跨任务的长期记忆？（多选）",
+      "options": [
+        "当前步骤刚返回的临时错误码",
+        "用户偏好的报告语言",
+        "历史任务的持久化操作记录",
+        "本轮下一步准备调用的临时参数"
+      ],
+      "answer": [
+        1,
+        2
+      ],
+      "explanation": "用户偏好和持久化历史具有跨任务价值。临时错误与当前参数主要属于当前任务状态；具体信息也可按需要持久化，但不能仅凭出现过就称为长期记忆。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 9 页"
+    },
+    {
+      "id": "agent-intro-v1-15",
+      "type": "multiple",
+      "category": "AI Agent",
+      "topic": "动态纠错",
+      "prompt": "下列哪些行为体现“根据反馈调整”？（多选）",
+      "options": [
+        "没有看到任何结果就宣布成功",
+        "发现搜索结果无关后更换关键词",
+        "依据参数报错修正请求",
+        "检查结果偏离目标后修改后续计划"
+      ],
+      "answer": [
+        1,
+        2,
+        3
+      ],
+      "explanation": "先观察真实结果，再调整关键词、参数或计划，才体现闭环。未经检查宣布成功不体现反馈。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 9 页"
+    },
+    {
+      "id": "agent-intro-v1-16",
+      "type": "multiple",
+      "category": "AI Agent",
+      "topic": "落地背景",
+      "prompt": "原文归纳的 Agent 落地条件包括哪些？（多选）",
+      "options": [
+        "模型理解和决策能力提升",
+        "工具请求更结构化",
+        "框架、检索、API 等生态完善",
+        "已经证明所有任务都能自动成功"
+      ],
+      "answer": [
+        0,
+        1,
+        2
+      ],
+      "explanation": "原文强调模型能力、调用机制和配套生态。生态成熟不代表 Agent 已经可靠解决所有任务。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 10 页"
+    },
+    {
+      "id": "agent-intro-v1-17",
+      "type": "multiple",
+      "category": "AI Agent",
+      "topic": "MCP 与 A2A",
+      "prompt": "哪些描述正确？（多选）",
+      "options": [
+        "MCP 可连接工具与上下文能力",
+        "A2A 关注 Agent 间的协作",
+        "MCP 和 A2A 必须二选一",
+        "采用这些协议本身就保证形成自主闭环"
+      ],
+      "answer": [
+        0,
+        1
+      ],
+      "explanation": "两者解决的连接问题不同，可以互补。通信协议提供互操作机制，不能代替目标规划、执行反馈等 Agent 控制逻辑。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 11 至 13 页；官方文档核对"
+    },
+    {
+      "id": "agent-intro-v1-18",
+      "type": "multiple",
+      "category": "AI Agent",
+      "topic": "Agent Card",
+      "prompt": "对 A2A 的 Agent Card，哪些理解准确？（多选）",
+      "options": [
+        "描述 Agent 身份与能力等元数据",
+        "可用于发现 Agent 的技能与服务入口",
+        "必须把每个正在运行任务的最新进度直接写在名片上",
+        "相当于模型自动拥有所有外部工具的执行权"
+      ],
+      "answer": [
+        0,
+        1
+      ],
+      "explanation": "Agent Card 用于身份、能力和服务发现。动态进度是任务与状态更新的职责，不应把它和能力元数据混为一谈。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 12 页；A2A 官方规范核对"
+    },
+    {
+      "id": "agent-intro-v1-19",
+      "type": "boolean",
+      "category": "AI Agent",
+      "topic": "工具与 Agent",
+      "prompt": "只要给大模型加一个搜索工具，就足以证明系统已经具备 Agent 的自主闭环。",
+      "answer": false,
+      "explanation": "工具说明系统可能具备外部行动能力；还需要看它是否围绕目标决定步骤，并把执行结果用于下一步决策。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 1、13 页"
+    },
+    {
+      "id": "agent-intro-v1-20",
+      "type": "boolean",
+      "category": "AI Agent",
+      "topic": "模型与执行",
+      "prompt": "模型输出一个 send_email 调用请求，就说明真实邮件已经发送成功。",
+      "answer": false,
+      "explanation": "调用请求是决策结果。邮件是否发送，需要外部程序实际执行并检查返回结果。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 6 至 8 页"
+    },
+    {
+      "id": "agent-intro-v1-21",
+      "type": "boolean",
+      "category": "AI Agent",
+      "topic": "短期记忆",
+      "prompt": "当前任务第一步搜索到的内容，可以作为短期记忆供后续步骤使用。",
+      "answer": true,
+      "explanation": "短期记忆保存任务内中间状态，帮助多步执行保持连贯。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 9 页"
+    },
+    {
+      "id": "agent-intro-v1-22",
+      "type": "boolean",
+      "category": "AI Agent",
+      "topic": "长期记忆",
+      "prompt": "只要不是向量数据库，就不可能实现 Agent 的长期记忆。",
+      "answer": false,
+      "explanation": "向量数据库与语义检索是常见实现，长期记忆的关键在跨任务持久化与取回信息，不是绑定某一种数据库。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 9 页；实现边界澄清"
+    },
+    {
+      "id": "agent-intro-v1-23",
+      "type": "boolean",
+      "category": "AI Agent",
+      "topic": "纠错边界",
+      "prompt": "Agent 可以根据失败结果调整参数或计划，但这并不保证每次都能成功。",
+      "answer": true,
+      "explanation": "反馈纠错是一种机制，不等于正确性与成功率保证；不能把系统能力说成无条件承诺。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 9 页；边界澄清"
+    },
+    {
+      "id": "agent-intro-v1-24",
+      "type": "boolean",
+      "category": "AI Agent",
+      "topic": "MCP 架构",
+      "prompt": "MCP Host 可以管理多个 Client，以接入不同 Server 的能力。",
+      "answer": true,
+      "explanation": "Host 是协调应用，Client 是通信组件，Server 提供上下文或工具等能力。官方架构描述了 Host 管理多个 Client 的关系。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 11 页；MCP 官方架构说明"
+    },
+    {
+      "id": "agent-intro-v1-25",
+      "type": "boolean",
+      "category": "AI Agent",
+      "topic": "协议协作",
+      "prompt": "MCP 主要关注外部能力接入，A2A 主要关注 Agent 间协作，因此二者可以同时使用。",
+      "answer": true,
+      "explanation": "MCP 与 A2A 面向不同连接层，原文将二者理解为互补，而不是互相替代。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 12、13 页"
+    },
+    {
+      "id": "agent-intro-v1-26",
+      "type": "boolean",
+      "category": "AI Agent",
+      "topic": "模型规划",
+      "prompt": "为了区分 LLM 与 Agent，应当说“任何大模型都不可能生成任务计划”。",
+      "answer": false,
+      "explanation": "模型可以生成计划。区别在于模型输出计划与系统持续执行、保存状态、利用反馈调整之间的边界。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 2、3、13 页；边界澄清"
+    },
+    {
+      "id": "agent-intro-v1-27",
+      "type": "recall",
+      "category": "AI Agent",
+      "topic": "概念复述",
+      "prompt": "用 3 至 5 句话回答：什么是 Agent？它与独立的大模型调用有什么区别？",
+      "answer": "Agent 是围绕目标进行感知、规划、行动和反馈调整的 AI 系统，核心是自主闭环。LLM 负责理解、推理与生成。Agent 在系统层组织模型、工具、状态和执行循环；模型决定调用什么，外部程序真实执行。执行结果反馈后，系统继续判断、调整或结束。",
+      "explanation": "自评要点：是否说出目标与自主闭环；是否区分模型与系统；是否强调外部执行与结果反馈。只说“能调工具”仍不完整。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 1、4 至 9、13 页"
+    },
+    {
+      "id": "agent-intro-v1-28",
+      "type": "recall",
+      "category": "AI Agent",
+      "topic": "场景应用",
+      "prompt": "任务是“查询天气后形成播报”。按感知、规划、行动、再感知说明完整过程，并说出查询失败时应怎么办。",
+      "answer": "感知目标与当前状态；规划查询天气再整理播报；模型给出查询参数，外部程序调用天气工具；读取结果，验证数据并组织播报。若查询失败，利用错误信息判断原因，调整参数或信息来源后重试，必要时说明无法完成，不能编造查询成功。",
+      "explanation": "自评要点：步骤间有真实结果传递；行动由外部程序执行；失败进入反馈而不是直接宣布成功。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 4 至 9 页"
+    },
+    {
+      "id": "agent-intro-v1-29",
+      "type": "matching",
+      "category": "AI Agent",
+      "topic": "工具链路",
+      "prompt": "将工具调用的四个环节与对应职责连线匹配。",
+      "options": [
+        "由运行时或应用程序调用函数或服务",
+        "把成功数据或错误交回后续决策",
+        "描述工具名称、用途、参数与必填项",
+        "表达选择哪个工具，以及使用什么参数"
+      ],
+      "answer": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "explanation": "工具定义是接口说明；模型调用请求是行动意图；真实执行由外部程序完成；结果反馈供下一步判断。请求不等于执行成功，定义也不等于实现。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 6 至 8 页",
+      "left": [
+        "工具定义",
+        "模型调用请求",
+        "真实执行",
+        "结果反馈"
+      ]
+    },
+    {
+      "id": "agent-intro-v1-30",
+      "type": "recall",
+      "category": "AI Agent",
+      "topic": "记忆复述",
+      "prompt": "区分 Agent 的短期记忆与长期记忆，各举一个例子，并说明是否必须用向量数据库。",
+      "answer": "短期记忆主要是当前任务的中间状态，例如本轮搜索结果；长期记忆保存跨任务的信息，例如用户报告语言偏好或历史操作。系统负责保存与在需要时取回。向量数据库是常见实现，不是唯一实现，也不是所有任务都必需。",
+      "explanation": "自评要点：区分任务内与跨任务；例子对应正确；不把向量数据库说成硬性条件。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 9 页；实现边界澄清"
+    },
+    {
+      "id": "agent-intro-v1-31",
+      "type": "recall",
+      "category": "AI Agent",
+      "topic": "协议辨析",
+      "prompt": "用自己的话解释 MCP 与 A2A 的定位，顺带说出 MCP 三个角色。",
+      "answer": "MCP 让 AI 应用连接外部工具与上下文能力；A2A 让不同 Agent 发现能力并协作，二者可以互补。MCP Host 是管理应用；Client 是与 Server 通信的组件；Server 是暴露外部能力的服务。",
+      "explanation": "自评要点：没有混淆 Agent 与工具两种连接；三角色职责对应；说明互补而非替代。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 11 至 13 页；官方文档核对"
+    },
+    {
+      "id": "agent-intro-v1-32",
+      "type": "recall",
+      "category": "AI Agent",
+      "topic": "面试纠偏",
+      "prompt": "有人说：“Agent 就是加了插件的大模型，工具定义写好后，模型自己会调用并保证任务成功。”指出至少三个问题。",
+      "answer": "第一，插件或工具只是能力的一部分，缺少目标驱动、自主规划与反馈闭环。第二，工具定义只是说明书，真实执行需要程序实现并调用。第三，模型主要生成调用决策，不能把请求当实际成功。第四，纠错能力不保证所有任务成功，应检查结果并有终止边界。",
+      "explanation": "自评要点：至少指出概念等同、定义与执行混淆、请求与结果混淆、成功保证中的三个，并给出正确说法。",
+      "knowledgeIds": [
+        "agent-introduction-v1"
+      ],
+      "source": "小林面试笔记 · 什么是 Agent？与大模型有什么本质不同？ · PDF 第 1、6 至 9、13 页；边界澄清"
+    }
+  ]
+}

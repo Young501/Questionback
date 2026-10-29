@@ -1,0 +1,12 @@
+# 可重新生成的 PDF 处理临时文件
+tmp/
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+# 不提交凭证或个人完整备份
+.env
+.env.*
+!.env.example
+拾题完整备份-*.json
+backups/

@@ -1,0 +1,12 @@
+{
+  "name": "questionback",
+  "version": "1.0.0",
+  "private": true,
+  "description": "拾题：本地知识库与每日二十题复习工具",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server.cjs",
+    "test": "node verify.cjs",
+    "export:pack": "node build-learning-pack.cjs"
+  }
+}
